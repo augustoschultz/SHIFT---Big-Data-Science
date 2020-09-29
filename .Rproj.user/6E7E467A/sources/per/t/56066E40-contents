@@ -79,3 +79,4 @@ fctOutlier(d$price)
 
 d$outlier <- fctOutlier(d$price)
 
+library(swirl)

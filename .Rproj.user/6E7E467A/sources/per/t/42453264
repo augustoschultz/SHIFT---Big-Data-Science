@@ -1,0 +1,32 @@
+{
+    "id": "42453264",
+    "path": null,
+    "project_path": null,
+    "type": "r_dataframe",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1602034458027.0,
+    "source_on_save": false,
+    "relative_order": 7,
+    "properties": {
+        "expression": "train_dummies",
+        "caption": "train_dummies",
+        "totalObservations": 891,
+        "displayedObservations": 891,
+        "variables": 29,
+        "cacheKey": "F17B0416",
+        "object": "train_dummies",
+        "environment": "",
+        "contentUrl": "grid_resource/gridviewer.html?env=&obj=train_dummies&cache_key=F17B0416&max_cols=50",
+        "preview": 0
+    },
+    "folds": "",
+    "lastKnownWriteTime": 2368928296696,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1602034458027,
+    "read_only": false,
+    "read_only_alternatives": []
+}

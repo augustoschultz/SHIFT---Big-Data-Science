@@ -1,0 +1,3 @@
+"0",""
+"0","# dispersão venda, desconto"
+"0","plot(baba_train$venda, baba_train$desconto)"

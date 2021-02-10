@@ -1,0 +1,5 @@
+"0","cooksd <- cooks.distance(modelo)
+"
+"2","Error in UseMethod(""cooks.distance"") : 
+  método não aplicável para 'cooks.distance' aplicado a um objeto de classe ""c('train.recipe', 'train')""
+"

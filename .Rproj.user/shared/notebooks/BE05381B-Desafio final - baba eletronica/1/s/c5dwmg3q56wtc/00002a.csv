@@ -1,0 +1,3 @@
+"0",""
+"0","# Histograma de vendas"
+"0","hist(baba_train$venda)"

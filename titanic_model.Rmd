@@ -14,22 +14,28 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r cars}
 library(tidyverse)
-
-
-
+library(corrplot)
+library(caret)
+library(rpart)
+library(rpart.plot)
 ```
 
 ```{r}
 ## Importando os dados
 
 train <- read_csv("titanic/train.csv")
+train$coj <- "train"
 test <- read_csv("titanic/test.csv")
+test$coj <- "test"
+test$Survived <- NA
+
+total <- rbind(train, test)
 
 ## primeiras visualizações
 
-head(train)
-glimpse(train)
-summary(train)
+head(total)
+glimpse(total)
+summary(total)
 
 ```
 
@@ -37,43 +43,199 @@ summary(train)
 
 ```{r}
 
-train <- train %>% 
+## Subistituir NA's de idade pela media e Embarked pelo valor mais presente
+total <- total %>%
   mutate(
          Age = if_else(is.na(Age), median(Age, na.rm = TRUE), Age), 
          Embarked = if_else(is.na(Embarked), "S", Embarked)
          )
 
 
-
 ## Extrair titulos dos nomes
 
-titulo <-  gsub("^.*, (.*?)\\..*$", "\\1", train$Name)
+titulo <-  gsub("^.*, (.*?)\\..*$", "\\1", total$Name)
 
 
-train$titulo <- titulo
+total$titulo <- titulo
 
-## Transformando variaveis em factors
-train <- train %>% 
-  mutate(Embarked = as.factor(Embarked), Sex = as.factor(Sex), titulo = as.factor(titulo))
+## Com cabine
 
-## Criando tabela com Dummies
-train_dummies <- fastDummies::dummy_columns(.data = train,
-                                            select_columns = c("Embarked", "Sex", "titulo"),
-                                            remove_selected_columns = TRUE,
-                                            remove_most_frequent_dummy = FALSE)
+total <- total %>% 
+  mutate(Cabin = ifelse(is.na(Cabin), 0,1))
 
-summary(train_dummies)
+```
 
-cor <- train_dummies %>% 
-  select(-c(Name,Ticket,Cabin,PassengerId)) %>% 
-  cor()
 
-corrplot::corrplot(cor, type = "upper")
 
-modelo_train <- lm(Survived ~ . - Name - Ticket - Cabin - PassengerId, train_dummies)
+```{r}
 
-summary(modelo_train)
+## Analisando correlacao entre fare e Pclass
+
+total %>% 
+  ggplot(aes(x = Pclass, y = Fare))+
+  geom_boxplot()
+
+## Contagem do numero de tickets repetidos
+
+ticket <- total %>% 
+  group_by(Ticket) %>% 
+  summarise(cnt = n())
+
+total <- left_join(total, ticket)
+
+## Fare real paga por passageiro
+
+total <- total %>% 
+  mutate(fare_un = Fare/cnt)
+
+## Agregando Tamanhos
+
+total <- total %>% 
+  mutate(tamanho_familia = SibSp+Parch+1)
+
+total <- total %>% 
+  mutate(tamanho_familia = case_when(tamanho_familia == 1 ~ "sozinho",
+                                     tamanho_familia == 2 ~ "casal",
+                                     tamanho_familia > 2 & tamanho_familia <= 4 ~ "familia",
+                                     tamanho_familia > 4 ~ "familia grande")
+         )
+
+total <- total %>% 
+  mutate(tamanho_ticket = case_when(cnt == 1 ~ "unico",
+                                     cnt >= 2 & cnt < 5 ~ "pequeno",
+                                     cnt >= 5 ~ "grande"))
+
+total <- total %>% 
+  mutate(titulo = case_when( titulo == "Mlle"  ~ "Miss",
+                             titulo == "Ms" ~ "Miss",
+                             titulo == "Mme" ~ "Mrs",
+                             titulo == "Lady" ~ "Miss",
+                             titulo == "Dona" ~ "Miss",
+                             titulo == "Capt"  ~ "Officer",
+                             titulo == "Col" ~ "Officer",
+                             titulo == "Major" ~ "Officer",
+                             titulo == "Dr"   ~ "Officer",
+                             titulo == "Rev" ~ "Officer",
+                             titulo == "Don" ~ "Officer",
+                             titulo == "Sir" ~ "Officer",
+                             titulo == "the Countess" ~ "Officer",
+                             titulo == "Jonkheer" ~ "Officer",
+                             TRUE ~ titulo))
+
+glimpse(total)
+
+## Analise de correlacao entre variaveis
+
+total %>%
+  filter(coj == "train") %>%
+  mutate_if(is.factor, as.numeric) %>%
+  select(-c(SibSp, Parch, cnt, Fare, PassengerId, Pclass)) %>% 
+  select_if(is.numeric) %>%
+  cor() %>%
+  corrplot.mixed(tl.cex=0.60)
+
+## Dummy colunas
+
+#total <- fastDummies::dummy_columns(.data = total,
+#              select_columns = "tamanho_familia",
+#              remove_selected_columns = T,
+#              remove_most_frequent_dummy = T)
 
 
 ```
 
+```{r}
+
+## Transformando variaveis em factors
+total <- total %>% 
+  mutate(
+         Sex = as.factor(Sex), 
+         titulo = as.factor(titulo),
+         Survived = as.factor(Survived), 
+         Pclass = as.factor(Pclass),
+         tamanho_familia = as.factor(tamanho_familia),
+         tamanho_ticket = as.factor(tamanho_ticket),
+         titulo = as.factor(titulo)
+         )
+
+```
+
+
+```{r}
+## Filtrando dataset para modelo
+
+train_mod <- total %>%
+  filter(coj == "train") %>% 
+  select(-c(coj, Name, Ticket, PassengerId, Fare, Parch, SibSp, cnt, fare_un, Embarked, tamanho_ticket, Age, titulo))
+
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+
+## Modelo de Regressao
+
+modelo_glm <- glm(Survived ~ .,
+                  family = binomial(link = "logit"),
+                  data = train_mod
+                  )
+
+## Summary
+
+summary(modelo_glm)
+
+
+test_final <- total %>% 
+  filter(coj == "test") %>% 
+  select(-c(coj, Name, Ticket, PassengerId, Fare, Parch, Survived, fare_un, tamanho_ticket, Embarked, Age))
+
+testpred <- predict(modelo_glm, newdata = test_final, type = "response")
+
+test_final$Survived <- testpred
+
+PassengerId <- total[892:1309,1]
+test_final$PassengerId <- PassengerId$PassengerId
+
+test_final <- test_final %>% 
+  mutate(Survived = ifelse(Survived > 0.62, 1, 0))
+
+test_final <- test_final %>% select(PassengerId, Survived)
+
+write_csv(test_final, "predict.csv")
+
+```
+
+```{r, message=FALSE, warning=FALSE}
+
+##arvore
+
+modelo_rpart <- rpart(Survived~., 
+                      data=train_mod,
+                      method="class")
+
+rpart.plot(modelo_rpart, extra = 3, fallen.leaves = T)
+
+## Summary
+
+summary(modelo_rpart)
+
+
+test_final <- total %>% 
+  filter(coj == "test") %>% 
+  select(-c(coj, Name, Ticket, Cabin, PassengerId, Fare, Parch, Survived, fare_un, tamanho_familia, Embarked, Age))
+
+testpred <- predict(modelo_rpart, newdata = test_final, type = "class")
+
+test_final$Survived <- testpred
+
+PassengerId <- total[892:1309,1]
+test_final$PassengerId <- PassengerId$PassengerId
+
+test_final <- test_final %>% 
+  mutate(Survived = ifelse(Survived > 0.5, 1, 0))
+
+test_final <- test_final %>% select(PassengerId, Survived)
+
+write_csv(test_final, "predict.csv")
+
+```

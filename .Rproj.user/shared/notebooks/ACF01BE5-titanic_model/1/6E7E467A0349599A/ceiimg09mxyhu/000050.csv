@@ -1,0 +1,6 @@
+"0",""
+"0","## Analisando correlacao entre fare e Pclass"
+"0",""
+"0","total %>% "
+"0","  ggplot(aes(x = Pclass, y = Fare))+"
+"0","  geom_boxplot()"

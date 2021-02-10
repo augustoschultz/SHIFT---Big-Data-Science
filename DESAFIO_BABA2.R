@@ -1,0 +1,270 @@
+#DESAFIO BABA_2#
+
+#BIBLIOTECAS UTILIZADAS
+library(tidyverse)
+library(lubridate)
+library(corrplot)
+library(plotly)
+library(readxl)
+library(fastDummies)
+library(AmesHousing)
+library(recipes)
+library(caret)
+library(urca)
+library(car)
+library(forecast)
+library(rpart)
+library(rpart.plot)
+library(ranger)
+library(randomForest)
+
+#leitura dos dados de teste e treino, unificando em um unico dataset e fazendo transformacoes primarias
+# Treino #
+baba_train <- read.csv("https://raw.githubusercontent.com/diogenesjusto/FIAP/master/SHIFT/202007/Desafio/train_BABA.csv")
+baba_train$conj <- "train"
+
+# Teste #
+
+baba_test <- read.csv("https://raw.githubusercontent.com/diogenesjusto/FIAP/master/SHIFT/202007/Desafio/test_BABA.csv")
+baba_test$venda <- NA
+baba_test$conj <- "test"
+
+# Uniao das bases
+
+baba_all2 <- rbind(baba_train, baba_test)
+
+baba_all2 <- baba_all2 %>% 
+  select(-X) %>%
+  mutate(
+    date = ymd(date),
+    month = floor_date(date, "month"),
+    weekday = case_when( 
+      weekday == "segunda-feira" ~ 1,
+      weekday == "ter?a-feira"~ 2,
+      weekday == "quarta-feira" ~  3,
+      weekday == "quinta-feira" ~  4,
+      weekday == "sexta-feira" ~  5,
+      weekday == "s?bado" ~  6,
+      weekday == "domingo" ~ 7
+    )
+  )
+
+# Base de datas com taxa de desemprego
+
+dim_date2 <- read_excel("dim_date2.xlsx")
+dim_date2$date_id <- as.Date(as.integer(dim_date2$date_id), origin = "1899-12-30")
+
+## join com base de datas e taxa de desemprego
+
+baba_all2 <- left_join(baba_all2, dim_date2, by = c("date" = "date_id"))
+
+# Transformação para variaveis nominais
+
+baba_all2 <- baba_all2 %>% 
+  mutate(weekday = as.character(weekday), mes = as.character(mes), is_brz_holiday = as.character(is_brz_holiday), brz_season = as.character(brz_season), tx_des = as.numeric(tx_des))
+
+#ANALISES DESCRITIVAS DO DATASET
+
+glimpse(baba_all2)
+summary(baba_all2)
+
+#ANALISE EXPLORATORIA DAS VARIAVEIS
+
+# Vendas por dia #
+
+ggplotly(
+  baba_all2 %>% 
+    filter(conj == "train") %>%
+    ggplot(aes(x = date, y = venda)) +
+    geom_line(color = "black") +
+    labs(
+      x = "Data",
+      y = "Vendas por dia"
+    )+
+    theme_bw()
+)
+
+# Vendas por mês #
+
+ggplotly(
+  baba_all2 %>%
+    filter(conj == "train") %>%
+    group_by(month) %>% 
+    summarise(vendas = sum(venda)) %>% 
+    ggplot(aes(x = month, y = vendas)) +
+    geom_col(color = "blue", fill = "white") +
+    labs(
+      x = "Data",
+      y = "Vendas por mes"
+    )+
+    theme_bw()
+)
+
+# vendas por estação do ano #
+
+ggplotly(
+  baba_all2 %>%
+    filter(conj == "train") %>%
+    group_by(brz_season) %>% 
+    summarise(vendas = sum(venda)) %>% 
+    ggplot(aes(x = brz_season, y = vendas, fill = brz_season)) +
+    geom_col(color = "blue") +
+    labs(
+      x = "Data",
+      y = "Vendas por estação"
+    )+
+    theme_bw()
+)
+
+# Proporção vendas feriado #
+
+ggplotly(
+  baba_all2 %>%
+    filter(conj == "train") %>%
+    group_by(is_brz_holiday) %>% 
+    summarise(vendas = sum(venda)/n()) %>% 
+    ggplot(aes(x = is_brz_holiday, y = vendas)) +
+    geom_col(color = "blue") +
+    labs(
+      x = "Data",
+      y = "Vendas proporção feriado sim/não"
+    )+
+    theme_bw()
+)
+
+# Boxplot Vendas por dia da semana #
+
+ggplotly(baba_all2 %>% 
+           filter(conj == "train") %>% 
+           ggplot( aes(x = weekday, y = venda, fill = weekday))+
+           geom_boxplot()+
+           labs(
+             x = "weekday",
+             y = "Vendas"
+           )+
+           theme_bw()
+)
+
+# dispersão venda, desconto
+plot(baba_train$venda, baba_train$desconto)
+
+# dispersão venda, margem
+plot(baba_train$venda, baba_train$margem)
+
+# dispersão desconto, margem
+plot(baba_train$desconto, baba_train$margem)
+
+# Histograma de vendas
+hist(baba_train$venda)
+
+# Hist de margem
+hist(baba_train$margem)
+
+# Hist de desconto
+hist(baba_train$desconto)
+
+# Grafico de correlação das variáveis numéricas
+
+baba_all2 %>%
+  filter(conj == "train") %>%
+  select_if(is.numeric) %>% 
+  cor() %>% 
+  corrplot(type = "upper")
+
+#DESENVOLVIMENTO DO MODELO DE REGRESSAO LINEAR IDENTIFICADNO E RETIRANDO OS OUTLIERS, ATRAVES DO METODO DE DISTANCIA DE COOK
+## Modelo de Regressao linear Multipla
+
+baba_train <- baba_all2 %>%
+  filter(conj == "train") %>%
+  select(-conj, -date, -outdesc, -outmg, -month)
+
+modelo2 <- lm(formula = venda ~ .,
+             data = baba_train)
+
+summary(modelo2)
+
+# Retirada de outliers identificados pelo metodo Distancia de Cook
+
+cooksd <- cooks.distance(modelo2)
+
+baba_train$cooktest <- cooksd
+baba_train$outlier <- ifelse(2*mean(cooksd) < baba_train$cooktest, 1, 0) #Identificar valores 2 vezes maior que a média da distancia de cook
+
+baba_train <- baba_train %>% 
+  filter(outlier != 1) %>% 
+  select(-cooktest, -outlier)
+
+## Novo modelo sem outliers
+
+modelo2 <- lm(formula = venda ~ .,
+             data = baba_train)
+
+summary(modelo2)
+
+
+
+# Modelo 3
+
+baba_train <- baba_all2 %>%
+  filter(conj == "train")
+
+modelo3 <- lm(venda ~ desconto + tx_des + mes +weekday + margem + is_brz_holiday + brz_season, data = baba_train)
+
+summary(modelo3)
+
+# Retirada de outliers identificados pelo metodo Distancia de Cook
+
+cooksd <- cooks.distance(modelo3)
+
+baba_train$cooktest <- cooksd
+baba_train$outlier <- ifelse(2*mean(cooksd) < baba_train$cooktest, 1, 0) #Identificar valores 2 vezes maior que a média da distancia de cook
+
+baba_train <- baba_train %>% 
+  filter(outlier != 1) %>% 
+  select(-cooktest, -outlier)
+
+## Novo modelo sem outliers
+
+modelo3 <- lm(venda ~ desconto + tx_des + mes +weekday + margem + is_brz_holiday + brz_season, data = baba_train)
+
+summary(modelo3)
+
+
+
+
+#DESENVOLVIMENTO DA TABELA COM AS PREDICOES DO MODELO
+
+# Predict
+
+baba_test <- baba_all2 %>%
+  filter(conj == "test") %>% 
+  select(-conj, -venda, -date, -outmg, -outdesc, - month)
+
+
+pred <- data.frame(x = predict(object = modelo3, baba_test,
+                               interval = "confidence",
+                               level = 0.95))
+
+
+## PREDICT DO PROFESSOR ###
+
+
+p<-predict(modelo3, newdata=baba_test)
+
+df <- as.data.frame(cbind(1:31,p))
+names(df)<-c("id","venda")
+
+write.table(df, 'predict_barbara2.csv', row.names = FALSE, col.names = FALSE, sep=",")
+
+
+#TRANSFORMACOES FINAIS E GERAR O ARQUIVO CSV
+# transformações finais e arquivo para submissão
+
+pred$id <- 1:31
+
+pred <- pred %>%
+  select(id, x.fit)
+
+pred <- rename(pred, venda = "x.fit")
+
+write.table(pred, 'predict_barbara2.csv', row.names = FALSE, col.names = FALSE, sep=",")

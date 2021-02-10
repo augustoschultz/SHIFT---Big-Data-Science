@@ -1,0 +1,3 @@
+"0",""
+"0","# Hist de margem"
+"0","hist(baba_train$margem)"

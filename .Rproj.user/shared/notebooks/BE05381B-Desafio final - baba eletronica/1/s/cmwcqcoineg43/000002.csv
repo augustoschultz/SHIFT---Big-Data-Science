@@ -1,0 +1,4 @@
+"0","plot(summary(baba_all))
+"
+"2","Error in tabulate(Ind[, dimd]) : 'bin' deve ser numérico ou um fator
+"

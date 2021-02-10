@@ -1,0 +1,3 @@
+"0",""
+"0","# dispersão venda, margem"
+"0","plot(baba_train$venda, baba_train$margem)"

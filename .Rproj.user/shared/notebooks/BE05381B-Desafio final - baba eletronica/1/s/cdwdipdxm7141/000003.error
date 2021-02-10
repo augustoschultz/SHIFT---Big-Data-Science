@@ -1,0 +1,1 @@
+{"frames":[{"func":"cooks.distance(modelo)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0}],"message":"Error in UseMethod(\"cooks.distance\") : \n  método não aplicável para 'cooks.distance' aplicado a um objeto de classe \"c('train.recipe', 'train')\"\n"}

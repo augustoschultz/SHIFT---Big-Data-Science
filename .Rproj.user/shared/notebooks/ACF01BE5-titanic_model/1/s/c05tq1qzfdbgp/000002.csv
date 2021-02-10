@@ -1,0 +1,7 @@
+"0","## Filtrando dataset para modelo"
+"0",""
+"0","train_mod <- total %>%"
+"0","  filter(coj == ""train"") %>% "
+"0","  select(-c(coj, Name, Ticket, PassengerId, Fare, Parch, SibSp, cnt, fare_un, Embarked, tamanho_ticket, Age, titulo, tamanho_familia))"
+"0",""
+"0",""

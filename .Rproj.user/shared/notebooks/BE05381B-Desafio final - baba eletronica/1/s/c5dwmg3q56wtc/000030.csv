@@ -1,0 +1,8 @@
+"0",""
+"0","# Grafico de correlação das variáveis numéricas"
+"0",""
+"0","baba_all %>%"
+"0","  filter(conj == ""train"") %>%"
+"0","  select_if(is.numeric) %>% "
+"0","  cor() %>% "
+"0","  corrplot(type = ""upper"")"

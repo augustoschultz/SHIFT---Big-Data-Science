@@ -1,0 +1,28 @@
+{
+    "id": "EC1A41DE",
+    "path": null,
+    "project_path": null,
+    "type": "object_explorer",
+    "hash": "0",
+    "contents": "",
+    "dirty": false,
+    "created": 1604511706101.0,
+    "source_on_save": false,
+    "relative_order": 3,
+    "properties": {
+        "id": "0d4b52c197394f0da35324091c9534d4",
+        "name": "fit_cons_temp",
+        "title": "fit_cons_temp",
+        "language": "R",
+        "source_window_id": "",
+        "Source": "Source"
+    },
+    "folds": "",
+    "lastKnownWriteTime": 30681189079908466,
+    "encoding": "",
+    "collab_server": "",
+    "source_window": "",
+    "last_content_update": 1604511706101,
+    "read_only": false,
+    "read_only_alternatives": []
+}

@@ -1,0 +1,100 @@
+---
+title: "Estudo Icecream"
+author: "Augusto Schultz"
+date: "04/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(gridExtra)
+require(forecast)
+require(lmtest)
+```
+
+
+```{r}
+df <- read.csv("C:\\Users\\Augusto Schultz\\Documents\\GitHub\\Rdatasets\\csv\\Ecdat\\Icecream.csv")
+
+glimpse(df)
+
+p1 <- ggplot(df, aes(x = X, y = cons)) +
+  ylab("consumo") +
+  xlab("") +
+  geom_line() +
+  expand_limits(x = 0, y = 0)
+
+p2 <- ggplot(df, aes(x = X, y = temp)) +
+  ylab("Temperatura") +
+  xlab("") +
+  geom_line() +
+  expand_limits(x = 0, y = 0)
+
+p3 <- ggplot(df, aes(x = X, y = income)) +
+  ylab("renda") +
+  xlab("") +
+  geom_line() +
+  expand_limits(x = 0, y = 70)
+
+p4 <- ggplot(df, aes(x = X, y = price)) +
+  ylab("preço") +
+  xlab("Period") +
+  geom_line() +
+  expand_limits(x = 0, y = 0.25)
+
+grid.arrange(p1, p2, p3, p4, ncol=1, nrow=4)
+
+```
+
+```{r}
+
+fit_cons <- auto.arima(df$cons)
+
+fcast_cons <- forecast(fit_cons, h = 6)
+
+autoplot(fcast_cons)
+
+summary(fcast_cons)
+
+fcast_cons_temp$x
+
+
+```
+```{r}
+fit_cons_temp <- auto.arima(df$cons, xreg = df$temp)
+
+fcast_temp <- c(70.5, 66, 60.5, 45.5, 36, 28)
+
+fcast_cons_temp <- forecast(fit_cons_temp, xreg = fcast_temp, h = 6)
+
+autoplot(fcast_cons_temp)
+
+
+summary(fcast_cons_temp)
+
+fcast_cons_temp
+
+coeftest(fit_cons_temp)
+```
+```{r}
+price_column <- matrix(df$price, ncol = 1)
+
+temp_column <- matrix(df$temp, ncol = 1)
+
+income <- c(NA, df$income)
+
+income_matrix <- embed(income, 2)
+
+vars_matrix <- cbind(temp_column, income_matrix[,2], price_column)
+
+print(vars_matrix)
+
+```
+```{r}
+
+```
+

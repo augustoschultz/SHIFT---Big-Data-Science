@@ -1,0 +1,122 @@
+"0","# library #"
+"0",""
+"0","library(tidyverse)"
+"2","Registered S3 methods overwritten by 'dbplyr':
+  method         from
+  print.tbl_lazy     
+  print.tbl_sql      
+"
+"2","[37m-- [1mAttaching packages[22m --------------------------------------- tidyverse 1.3.0 --[39m
+"
+"2","[37m[32mv[37m [34mggplot2[37m 3.3.2     [32mv[37m [34mpurrr  [37m 0.3.4
+[32mv[37m [34mtibble [37m 3.0.3     [32mv[37m [34mdplyr  [37m 1.0.0
+[32mv[37m [34mtidyr  [37m 1.1.0     [32mv[37m [34mstringr[37m 1.4.0
+[32mv[37m [34mreadr  [37m 1.3.1     [32mv[37m [34mforcats[37m 0.5.0[39m
+"
+"2","[37m-- [1mConflicts[22m ------------------------------------------ tidyverse_conflicts() --
+[31mx[37m [34mdplyr[37m::[32mfilter()[37m masks [34mstats[37m::filter()
+[31mx[37m [34mdplyr[37m::[32mlag()[37m    masks [34mstats[37m::lag()[39m
+"
+"0","library(lubridate)"
+"2","
+Attaching package: ‘lubridate’
+
+"
+"2","The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+"
+"0","library(corrplot)"
+"2","corrplot 0.84 loaded
+"
+"0","library(fastDummies)"
+"0","library(AmesHousing)"
+"2","package ‘AmesHousing’ was built under R version 4.0.3"
+"0","library(recipes)"
+"2","
+Attaching package: ‘recipes’
+
+"
+"2","The following object is masked from ‘package:stringr’:
+
+    fixed
+
+"
+"2","The following object is masked from ‘package:stats’:
+
+    step
+
+"
+"0","library(caret)"
+"2","Carregando pacotes exigidos: lattice
+"
+"2","Registered S3 method overwritten by 'data.table':
+  method           from
+  print.data.table     
+"
+"2","
+Attaching package: ‘caret’
+
+"
+"2","The following object is masked from ‘package:purrr’:
+
+    lift
+
+"
+"0","library(urca)"
+"0","library(car)"
+"2","Carregando pacotes exigidos: carData
+"
+"2","
+Attaching package: ‘car’
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    recode
+
+"
+"2","The following object is masked from ‘package:purrr’:
+
+    some
+
+"
+"0","library(forecast)"
+"2","Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+"
+"0","library(rpart)"
+"0","library(rpart.plot)"
+"0","library(ranger)"
+"0","library(xgboost)"
+"2","
+Attaching package: ‘xgboost’
+
+"
+"2","The following object is masked from ‘package:dplyr’:
+
+    slice
+
+"
+"0","library(AUC)"
+"2","package ‘AUC’ was built under R version 4.0.3"
+"2","AUC 0.3.0
+"
+"2","Type AUCNews() to see the change log and ?AUC to get an overview.
+"
+"2","
+Attaching package: ‘AUC’
+
+"
+"2","The following object is masked from ‘package:forecast’:
+
+    accuracy
+
+"
+"2","The following objects are masked from ‘package:caret’:
+
+    sensitivity, specificity
+
+"
